@@ -3,64 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Tareas</title>
+    <title>TODO List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f9f9f9;
             font-family: Arial, sans-serif;
         }
+        .table-warning {
+            background-color: #fff3cd !important;
+        }
+        .table-danger {
+            background-color: #f8d7da !important;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="text-center mb-4">Lista de Tareas</h1>
+        <h1 class="text-center mb-4">TODO List</h1>
 
-        <!-- Botón para volver al índice -->
+        <!-- Botón de regreso al índice -->
         <div class="mb-4 text-center">
-            <a href="index.html" class="btn btn-secondary">Volver a la Planificación</a>
+            <a href="index.html" class="btn btn-secondary">Volver al Índice</a>
         </div>
 
         <!-- Botón Nueva Tarea -->
         <div class="mb-4 text-center">
-            <button id="newTaskButton" class="btn btn-primary">Nueva Tarea</button>
+            <button id="newTodoButton" class="btn btn-primary">Nueva Tarea</button>
         </div>
 
         <!-- Tabla de Tareas -->
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Fecha</th>
-                    <th>Título</th>
+                    <th>Tarea</th>
                     <th>Descripción</th>
+                    <th>Fecha de Realización</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="taskTableBody"></tbody>
+            <tbody id="todoTableBody"></tbody>
         </table>
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal fade" id="todoModal" tabindex="-1" aria-labelledby="todoModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="taskModalLabel">Agregar Tarea</h5>
+                    <h5 class="modal-title" id="todoModalLabel">Agregar Tarea</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="taskForm">
+                    <form id="todoForm">
                         <div class="mb-3">
-                            <label for="taskDate" class="form-label">Fecha</label>
-                            <input type="date" class="form-control" id="taskDate" required>
+                            <label for="todoTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="todoTitle" required>
                         </div>
                         <div class="mb-3">
-                            <label for="taskTitle" class="form-label">Título</label>
-                            <input type="text" class="form-control" id="taskTitle" required>
+                            <label for="todoDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="todoDescription" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="taskDescription" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                            <label for="todoDate" class="form-label">Fecha de Realización</label>
+                            <input type="date" class="form-control" id="todoDate" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Guardar</button>
                     </form>
@@ -70,42 +76,55 @@
     </div>
 
     <script>
-        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        const todos = JSON.parse(localStorage.getItem('todos')) || [];
 
-        const saveTasks = () => {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+        const saveTodos = () => {
+            localStorage.setItem('todos', JSON.stringify(todos));
         };
 
-        const loadTasks = () => {
-            const tableBody = document.getElementById('taskTableBody');
+        const loadTodos = () => {
+            const tableBody = document.getElementById('todoTableBody');
             tableBody.innerHTML = '';
-            const sortedTasks = [...tasks].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const now = new Date();
 
-            sortedTasks.forEach(task => {
+            todos.forEach(todo => {
+                const todoDate = new Date(todo.date);
+                const timeDiff = (todoDate - now) / (1000 * 60 * 60 * 24);
+                let rowClass = '';
+                let dateContent = todo.date;
+
+                if (timeDiff < 0) {
+                    rowClass = 'table-danger';
+                    dateContent = `${todo.date} - Vencida`;
+                } else if (timeDiff <= 2) {
+                    rowClass = 'table-warning';
+                }
+
                 const row = document.createElement('tr');
+                row.className = rowClass;
                 row.innerHTML = `
-                    <td>${task.date}</td>
-                    <td>${task.title}</td>
-                    <td>${task.description}</td>
+                    <td>${todo.title}</td>
+                    <td>${todo.description}</td>
+                    <td>${dateContent}</td>
                     <td>
-                        <button class="btn btn-danger btn-sm delete-btn" data-title="${task.title}" data-date="${task.date}">Eliminar</button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-title="${todo.title}" data-date="${todo.date}">Eliminar</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
         };
 
-        document.getElementById('taskForm').addEventListener('submit', function(event) {
+        document.getElementById('todoForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            const date = document.getElementById('taskDate').value;
-            const title = document.getElementById('taskTitle').value;
-            const description = document.getElementById('taskDescription').value;
+            const title = document.getElementById('todoTitle').value;
+            const description = document.getElementById('todoDescription').value;
+            const date = document.getElementById('todoDate').value;
 
-            tasks.push({ date, title, description });
-            saveTasks();
-            loadTasks();
+            todos.push({ title, description, date });
+            saveTodos();
+            loadTodos();
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('todoModal'));
             modal.hide();
             this.reset();
         });
@@ -114,21 +133,21 @@
             if (event.target.classList.contains('delete-btn')) {
                 const title = event.target.dataset.title;
                 const date = event.target.dataset.date;
-                const index = tasks.findIndex(task => task.title === title && task.date === date);
+                const index = todos.findIndex(todo => todo.title === title && todo.date === date);
                 if (index > -1) {
-                    tasks.splice(index, 1);
-                    saveTasks();
-                    loadTasks();
+                    todos.splice(index, 1);
+                    saveTodos();
+                    loadTodos();
                 }
             }
         });
 
-        document.getElementById('newTaskButton').addEventListener('click', function() {
-            const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+        document.getElementById('newTodoButton').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('todoModal'));
             modal.show();
         });
 
-        loadTasks();
+        loadTodos();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
