@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Lista de Tareas</h1>
+
+        <!-- Botón para volver al índice -->
+        <div class="mb-4 text-center">
+            <a href="index.html" class="btn btn-secondary">Volver a la Planificación</a>
+        </div>
+
+        <!-- Botón Nueva Tarea -->
+        <div class="mb-4 text-center">
+            <button id="newTaskButton" class="btn btn-primary">Nueva Tarea</button>
+        </div>
+
+        <!-- Tabla de Tareas -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">Agregar Tarea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <div class="mb-3">
+                            <label for="taskDate" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="taskDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="taskTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        const saveTasks = () => {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        };
+
+        const loadTasks = () => {
+            const tableBody = document.getElementById('taskTableBody');
+            tableBody.innerHTML = '';
+            const sortedTasks = [...tasks].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            sortedTasks.forEach(task => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.date}</td>
+                    <td>${task.title}</td>
+                    <td>${task.description}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm delete-btn" data-title="${task.title}" data-date="${task.date}">Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+
+        document.getElementById('taskForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const date = document.getElementById('taskDate').value;
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+
+            tasks.push({ date, title, description });
+            saveTasks();
+            loadTasks();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
+            modal.hide();
+            this.reset();
+        });
+
+        document.body.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-btn')) {
+                const title = event.target.dataset.title;
+                const date = event.target.dataset.date;
+                const index = tasks.findIndex(task => task.title === title && task.date === date);
+                if (index > -1) {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    loadTasks();
+                }
+            }
+        });
+
+        document.getElementById('newTaskButton').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+            modal.show();
+        });
+
+        loadTasks();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
