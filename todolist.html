@@ -16,11 +16,41 @@
         .table-danger {
             background-color: #f8d7da !important;
         }
+        #clock {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        #calendar {
+            max-width: 300px;
+        }
+        .today {
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            padding: 5px;
+        }
+        .calendar-row {
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        .calendar-cell {
+            width: 14.28%;
+            text-align: center;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
         <h1 class="text-center mb-4">TODO List</h1>
+
+        <!-- Cuadro de hora y calendario -->
+        <div class="d-flex justify-content-end mb-4">
+            <div class="text-end me-4">
+                <div id="clock"></div>
+                <div id="calendar"></div>
+            </div>
+        </div>
 
         <!-- Botón de regreso al índice -->
         <div class="mb-4 text-center">
@@ -147,9 +177,97 @@
             modal.show();
         });
 
+        // Reloj
+        const updateClock = () => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        };
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Calendario
+        const renderCalendar = (date) => {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+
+            const currentMonth = date.getMonth();
+            const currentYear = date.getFullYear();
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'd-flex justify-content-between align-items-center mb-2';
+            header.innerHTML = `
+                <button id="prevMonth" class="btn btn-sm btn-secondary">&lt;</button>
+                <span>${monthNames[currentMonth]} ${currentYear}</span>
+                <button id="nextMonth" class="btn btn-sm btn-secondary">&gt;</button>
+            `;
+            calendar.appendChild(header);
+
+            // Days of the week
+            const daysOfWeek = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const weekRow = document.createElement('div');
+            weekRow.className = 'calendar-row';
+            daysOfWeek.forEach(day => {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell fw-bold';
+                cell.textContent = day;
+                weekRow.appendChild(cell);
+            });
+            calendar.appendChild(weekRow);
+
+            // Days in the month
+            const daysRow = document.createElement('div');
+            daysRow.className = 'calendar-row';
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell';
+                daysRow.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                cell.textContent = day;
+                if (day === date.getDate()) {
+                    cell.classList.add('today');
+                }
+                daysRow.appendChild(cell);
+
+                if ((firstDay + day) % 7 === 0 || day === daysInMonth) {
+                    calendar.appendChild(daysRow.cloneNode(true));
+                    daysRow.innerHTML = '';
+                }
+            }
+
+            // Navigation
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                date.setMonth(date.getMonth() - 1);
+                renderCalendar(date);
+            });
+
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                date.setMonth(date.getMonth() + 1);
+                renderCalendar(date);
+            });
+        };
+
+        // Inicializar calendario
+        const today = new Date();
+        renderCalendar(today);
+
+        // Cargar las tareas al inicio
         loadTodos();
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
